@@ -1,0 +1,8 @@
+# Test c++ files
+charcounttest.cpp
+veccounttest.cpp
+
+# Executable files
+charcounttest.exe
+test.exe
+stringcompressor.exe
