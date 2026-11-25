@@ -6,3 +6,6 @@ veccounttest.cpp
 charcounttest.exe
 test.exe
 stringcompressor.exe
+
+# vscode file
+.vscode
