@@ -22,6 +22,7 @@ struct treenode
 // function prototypes
 void countletters(std::string input, std::vector<letter> &letters);
 treenode* findsmallesttreenode(std::vector<treenode*> treenodestorage, treenode* merge1, treenode* merge2);
+void gettreevalues(treenode* currnode);
 
 
 int main(void)
@@ -83,25 +84,81 @@ int main(void)
         treenodestorage.push_back(temp);
     } // IMPORTANT: REMEMBER TO FREE MEMORY LATER/AT THE END OF CODE
 
+    treenode* rootnode;
+
     bool treemade = false;
     if(treenodestorage.size() < 2)
     {
+        if(treenodestorage.size() <= 0)
+        {
+            std::cout << "Not enough values to make the tree\n"; // when no values just do this
+            return 0; // maybe add a different return value for this input error? maybe 2
+        }
         treemade = true;
         // if theres just one or no values to make the tree with set treemade to true
     }
 
     while(!treemade) // while tree isn't fully made yet
     {
+        bool onenodeleft = false;
+
         treenode* merge1 = nullptr;
         treenode* merge2 = nullptr; // creates 2 treenodes which will be the 2 lowest valued ones in the array to merge
         
-        merge1 = findsmallesttreenode(treenodestorage, merge1, merge2);
+        merge1 = findsmallesttreenode(treenodestorage, merge1, merge2); // will never return as nullptr since there will always be one non-merged node always
         merge2 = findsmallesttreenode(treenodestorage, merge1, merge2);
 
-        std::cout << "smallest val letter " << merge1->character << " " << merge1->value << "\n";
-        std::cout << "next small val letter " << merge2->character << " " << merge2->value << "\n";
-        break;
+        if(merge1 != nullptr && merge2 != nullptr) // checks if any of the merges are null, so it won't merge if thats the case
+        { 
+            // merge time!! this is the merge function
+            
+            treenode* temp = new treenode; // create a new treenode off the heap
+            temp->character = '\0'; // sets its char to null since it doesnt have one so null terminator is best option i think
+            temp->childleft = merge1;
+            temp->childright = merge2; // set its 2 children (pointers) as merge1 and merge2
+            temp->value = merge1->value + merge2->value; // combine the values of merge1 and 2 for the merge nodes value
+            treenodestorage.push_back(temp); // append the merged node to the vector
+
+            merge1->ismerged = true;
+            merge2->ismerged = true; 
+            // set the merge1 and 2 to ismerged \
+            (since they point to the values in the vector treenodestorage, it changes those values which is what we want)
+        }
+
+        int notmergedcount = 0; // initializes variable for search
+        for(size_t i = 0; i < treenodestorage.size(); i++) // checks if theres only one node left that hasnt been merged yet
+        {
+            if(!treenodestorage[i]->ismerged)
+            {
+                notmergedcount++; // increments notmergedcount for every node that isn't merged
+            }
+            if(notmergedcount >= 2)
+            {
+                break; // if over 2 things have been merged break out of loop
+            }
+        }
+        if(notmergedcount == 1) // if notmergedcount is exactly one
+        {
+            onenodeleft = true;
+            for(size_t i = 0; i < treenodestorage.size(); i++)
+            {
+                if(!treenodestorage[i]->ismerged) // theres definetly a better way to write this search..
+                {
+                    rootnode = treenodestorage[i]; // turn that one into the root node
+                    break;
+                }
+            }
+        }
+        if(onenodeleft)
+        {
+            std::cout << "Tree Formed\n"; // only when theres one unmerged node left (root) the tree is formed
+            treemade = true;
+            break;
+        }
     }
+    // FIX EDGE CASE WHERE THERE IS ONLY ONE CHARACTER INPUT BECAUSE NOTHING HAPPENS IN THAT SCENARIO AND TREE IS NEVER MADE
+
+    gettreevalues(rootnode); // just a hardcoded test rn
 
     // MEMORY FREEING
     for(size_t i = 0; i < treenodestorage.size(); i++)
@@ -109,8 +166,6 @@ int main(void)
         delete treenodestorage[i];
     }
     treenodestorage.clear();
-    
-    // don't forget to devlog!!
 }
 
 
@@ -188,4 +243,28 @@ treenode* findsmallesttreenode(std::vector<treenode*> treenodestorage, treenode*
         }
     }
     return smallest;
+}
+
+void gettreevalues(treenode* currnode)
+{
+    // this function will recursively search through the tree to generate the huffman code
+
+    // hardcoded test version
+    std::string s;
+
+    while(true)
+    {
+        if(currnode->character == '\0')
+        {
+            currnode = currnode->childleft;
+            s += "1";
+        }
+        else
+        {
+            std::cout << s;
+            return;
+        }
+    }
+    
+    // CHANGE THIS TOMORROW TO BECOME A PROPER RECURSIVE HUFFMAN TREE PATH CHECKER
 }
