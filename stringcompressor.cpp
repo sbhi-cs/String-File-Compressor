@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <unordered_map>
 
 // struct definitions
 struct letter
@@ -22,7 +23,8 @@ struct treenode
 // function prototypes
 void countletters(std::string input, std::vector<letter> &letters);
 treenode* findsmallesttreenode(std::vector<treenode*> treenodestorage, treenode* merge1, treenode* merge2);
-void gettreevalues(treenode* currnode);
+void gettreevalues(treenode* currnode, std::string &bitvalue, std::unordered_map<char, std::string> &codes);
+std::string encode(std::string input, std::unordered_map<char, std::string> codes);
 
 
 int main(void)
@@ -82,7 +84,7 @@ int main(void)
         // this takes some memory from the heap for temp so we can store in the vector
 
         treenodestorage.push_back(temp);
-    } // IMPORTANT: REMEMBER TO FREE MEMORY LATER/AT THE END OF CODE
+    } // IMPORTANT: REMEMBER TO FREE MEMORY LATER/AT THE END OF CODE (done)
 
     treenode* rootnode;
 
@@ -158,7 +160,43 @@ int main(void)
     }
     // FIX EDGE CASE WHERE THERE IS ONLY ONE CHARACTER INPUT BECAUSE NOTHING HAPPENS IN THAT SCENARIO AND TREE IS NEVER MADE
 
-    gettreevalues(rootnode); // just a hardcoded test rn
+    std::string bitvalue; // string that will hold the bit code of a node when going down the tree
+    std::unordered_map<char, std::string> codes; // hashmap that saves the char (as a key) and the code (string)
+    std::unordered_map<std::string, char> decodes; // opposite hashmap for decoding rather than encoding
+    // string might change to packed bits later
+    // hashmap is also whats used to encode afterwards and print
+
+    
+    gettreevalues(rootnode, bitvalue, codes);
+
+    std::string encodedstring = encode(input, codes); // this guy will hold the encoded string, which we get from encode function
+
+    std::cout << encodedstring << "\n"; // print encoded
+
+    // build decode function
+    // abstract later
+    for(auto item : codes) // loops through every key/val in codes, item stored the current key/val pair its looping over
+    {
+        decodes.insert({item.second, item.first}); 
+        // insert it opposite to codes, string first (key) then char(val)
+        // item.first and item.second just mean the key and value of codes respectively
+    }
+
+    std::string decodebuffer;
+    std::string decodedstring;
+    for(size_t i = 0; i < encodedstring.size(); i++)
+    {
+        decodebuffer.push_back(encodedstring[i]);
+        if(decodes.contains(decodebuffer))
+        {
+            decodedstring.push_back(decodes[decodebuffer]);
+            decodebuffer.clear();
+        }
+    }
+    std::cout << decodedstring << "\n";
+
+
+
 
     // MEMORY FREEING
     for(size_t i = 0; i < treenodestorage.size(); i++)
@@ -245,26 +283,43 @@ treenode* findsmallesttreenode(std::vector<treenode*> treenodestorage, treenode*
     return smallest;
 }
 
-void gettreevalues(treenode* currnode)
+void gettreevalues(treenode* currnode, std::string &bitvalue, std::unordered_map<char, std::string> &codes)
 {
     // this function will recursively search through the tree to generate the huffman code
 
-    // hardcoded test version
-    std::string s;
-
-    while(true)
+    if(currnode->character == '\0') // null terminator means it has children, which means it will recurse
     {
-        if(currnode->character == '\0')
+        if(currnode->childleft != nullptr) // check if left child isnt null
         {
-            currnode = currnode->childleft;
-            s += "1";
+            bitvalue.append("1"); // append 1 on the string bitvalue code (1 is left)
+            gettreevalues(currnode->childleft, bitvalue, codes); // recurse on left node
+            bitvalue.pop_back(); // after returned, remove last letter from string bitvalue code
         }
-        else
+        if(currnode->childright != nullptr) // now check if right child isnt null
         {
-            std::cout << s;
-            return;
+            bitvalue.append("0"); // append 0 on the string bitvalue code (0 is right)
+            gettreevalues(currnode->childright, bitvalue, codes); // recurse on right node
+            bitvalue.pop_back(); // after returned, remove last letter from string bitvalue code
         }
     }
-    
-    // CHANGE THIS TOMORROW TO BECOME A PROPER RECURSIVE HUFFMAN TREE PATH CHECKER
+    else // in case of a leaf node (since no null terminator as char)
+    {
+        // add current character (curr->character) and code (bitvalue string) to hashmap
+        codes.insert({currnode->character, bitvalue});
+        return; // return to previous function since recursion
+    } // the leaf node basically acts as a base case
+}
+
+std::string encode(std::string input, std::unordered_map<char, std::string> codes)
+{
+    std::string encoded;
+
+    for(size_t i = 0; i < input.size(); i++)
+    {
+        if(codes.contains(input[i]))
+        {
+           encoded.append(codes[input[i]]); 
+        }
+    }
+    return encoded;
 }
